@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>FarmSwap</title>
+
+    <link rel="stylesheet"
+          href="style.css">
+
+</head>
+
+<body>
+
+
+<!-- NAVBAR -->
+
+<header>
+
+    <div class="logo">
+        Farm<span>Swap</span> 🌱
+    </div>
+
+    <nav>
+
+        <a href="#home">Home</a>
+
+        <a href="#about">How it Works</a>
+
+        <a href="#match">Matches</a>
+
+    </nav>
+
+</header>
+
+
+
+<!-- HOME -->
+
+<section class="hero"
+         id="home">
+
+    <div class="hero-text">
+
+        <div class="tag">
+            🌾 AI-Powered Agriculture Platform
+        </div>
+
+        <h1>
+            Connect Farms.<br>
+            <span>Reduce Waste.</span>
+        </h1>
+
+        <p>
+            FarmSwap connects farmers who have
+            agricultural products with people who
+            need them using intelligent matching.
+        </p>
+
+
+        <div class="buttons">
+
+            <button
+                onclick="showFarmer()"
+                class="primary">
+
+                👨‍🌾 I Have Product
+
+            </button>
+
+
+            <button
+                onclick="showRequester()"
+                class="secondary">
+
+                🛒 I Need Product
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div class="hero-image">
+
+        🌾
+
+        <div class="swap-animation">
+
+            👨‍🌾
+            ↔
+            🤖
+            ↔
+            🛒
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- HOW IT WORKS -->
+
+<section id="about">
+
+    <h2>
+        How FarmSwap Works
+    </h2>
+
+    <div class="steps">
+
+        <div class="step">
+
+            <div>👨‍🌾</div>
+
+            <h3>
+                1. Farmer Lists
+            </h3>
+
+            <p>
+                Farmers enter the products,
+                quantity, price and location.
+            </p>
+
+        </div>
+
+
+        <div class="step">
+
+            <div>🛒</div>
+
+            <h3>
+                2. Request is Created
+            </h3>
+
+            <p>
+                Buyers enter what product
+                they need and their requirements.
+            </p>
+
+        </div>
+
+
+        <div class="step">
+
+            <div>🤖</div>
+
+            <h3>
+                3. Smart Matching
+            </h3>
+
+            <p>
+                FarmSwap compares product,
+                quantity, price and location.
+            </p>
+
+        </div>
+
+
+        <div class="step">
+
+            <div>🤝</div>
+
+            <h3>
+                4. Connect
+            </h3>
+
+            <p>
+                When a suitable match is found,
+                both users can connect.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- FARMER FORM -->
+
+<section class="form-section"
+         id="farmerForm"
+         style="display:none;">
+
+    <div class="form-box">
+
+        <h2>
+            👨‍🌾 Farmer / Supplier
+        </h2>
+
+        <p>
+            Tell us what you have available.
+        </p>
+
+
+        <form onsubmit="submitFarmer(event)">
+
+            <input
+                id="farmerName"
+                placeholder="Your Name"
+                required>
+
+
+            <input
+                id="farmerPhone"
+                placeholder="Phone Number"
+                type="tel"
+                required>
+
+
+            <input
+                id="farmerLocation"
+                placeholder="Location"
+                required>
+
+
+            <input
+                id="farmerProduct"
+                placeholder="Product Available"
+                required>
+
+
+            <input
+                id="farmerQuantity"
+                placeholder="Quantity (kg)"
+                type="number"
+                required>
+
+
+            <input
+                id="farmerPrice"
+                placeholder="Price per kg (₹)"
+                type="number"
+                required>
+
+
+            <input
+                id="farmerNeed"
+                placeholder="What do you need in exchange? (Optional)">
+
+
+            <button class="primary"
+                    type="submit">
+
+                Submit Produce 🌱
+
+            </button>
+
+        </form>
+
+    </div>
+
+</section>
+
+
+
+<!-- REQUESTER FORM -->
+
+<section class="form-section"
+         id="requesterForm"
+         style="display:none;">
+
+    <div class="form-box">
+
+        <h2>
+            🛒 Product Request
+        </h2>
+
+        <p>
+            Tell us what you need.
+        </p>
+
+
+        <form onsubmit="submitRequester(event)">
+
+            <input
+                id="requesterName"
+                placeholder="Your Name"
+                required>
+
+
+            <input
+                id="requesterPhone"
+                placeholder="Phone Number"
+                type="tel"
+                required>
+
+
+            <input
+                id="requesterLocation"
+                placeholder="Your Location"
+                required>
+
+
+            <input
+                id="neededProduct"
+                placeholder="Product You Need"
+                required>
+
+
+            <input
+                id="neededQuantity"
+                placeholder="Required Quantity (kg)"
+                type="number"
+                required>
+
+
+            <input
+                id="maxPrice"
+                placeholder="Maximum Price per kg (₹)"
+                type="number"
+                required>
+
+
+            <input
+                id="exchangeProduct"
+                placeholder="Product You Can Exchange (Optional)">
+
+
+            <button class="primary"
+                    type="submit">
+
+                Find My Match 🤖
+
+            </button>
+
+        </form>
+
+    </div>
+
+</section>
+
+
+
+<!-- MATCH RESULT -->
+
+<section id="match"
+         class="match-section"
+         style="display:none;">
+
+    <div class="match-box">
+
+        <div class="match-icon">
+            🎯
+        </div>
+
+        <h2>
+            Match Found!
+        </h2>
+
+        <div id="matchResult">
+
+        </div>
+
+        <button
+            class="primary"
+            onclick="connectUsers()">
+
+            🤝 Connect
+
+        </button>
+
+    </div>
+
+</section>
+
+
+
+<footer>
+
+    <h3>
+        FarmSwap 🌱
+    </h3>
+
+    <p>
+        Connect Farms. Reduce Waste. Grow Together.
+    </p>
+
+    <p>
+        Hackathon Prototype
+    </p>
+
+</footer>
+
+
+
+<script src="script.js"></script>
+
+</body>
+
+</html>
