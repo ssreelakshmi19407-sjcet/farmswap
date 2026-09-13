@@ -1,413 +1,496 @@
-/*
+// ===============================
+// FIREBASE CONFIGURATION
+// ===============================
 
-    FARMSWAP SMART MATCHING SYSTEM
+const firebaseConfig = {
+    apiKey: "AIzaSyBTZ8MtXcBJan5ZNk1N_88P-7NRRfatREg",
+    authDomain: "farmswap-9f92e.firebaseapp.com",
+    projectId: "farmswap-9f92e",
+    storageBucket: "farmswap-9f92e.firebasestorage.app",
+    messagingSenderId: "1008224880479",
+    appId: "1:1008224880479:web:5eb44a9175c626784158ea"
+};
 
-*/
+// Start Firebase
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
 
 
-let farmerData = null;
+// ===============================
+// VARIABLES
+// ===============================
 
-let requesterData = null;
+let currentMatch = null;
 
 
+// ===============================
+// ANONYMOUS LOGIN
+// ===============================
 
-/* SHOW FARMER FORM */
+firebase.auth().signInAnonymously()
+    .then(() => {
+        console.log("FarmSwap connected to Firebase");
+        loadProducts();
+        loadRequests();
+    })
+    .catch((error) => {
+        console.error("Firebase login error:", error);
+    });
+
+
+// ===============================
+// SHOW FARMER FORM
+// ===============================
 
 function showFarmer() {
-
-    document.getElementById("farmerForm")
-        .style.display = "block";
-
-    document.getElementById("requesterForm")
-        .style.display = "none";
-
-    document.getElementById("farmerForm")
-        .scrollIntoView({
-            behavior: "smooth"
-        });
-
+    document.getElementById("farmerSection").scrollIntoView({
+        behavior: "smooth"
+    });
 }
 
 
-
-/* SHOW REQUESTER FORM */
+// ===============================
+// SHOW REQUESTER FORM
+// ===============================
 
 function showRequester() {
-
-    document.getElementById("requesterForm")
-        .style.display = "block";
-
-    document.getElementById("farmerForm")
-        .style.display = "none";
-
-    document.getElementById("requesterForm")
-        .scrollIntoView({
-            behavior: "smooth"
-        });
-
+    document.getElementById("requesterSection").scrollIntoView({
+        behavior: "smooth"
+    });
 }
 
 
-
-/* FARMER SUBMISSION */
+// ===============================
+// FARMER SUBMIT
+// ===============================
 
 function submitFarmer(event) {
 
     event.preventDefault();
 
+    const name = document.getElementById("farmerName").value.trim();
+    const phone = document.getElementById("farmerPhone").value.trim();
+    const location = document.getElementById("farmerLocation").value.trim();
+    const product = document.getElementById("farmerProduct").value.trim();
+    const quantity = Number(document.getElementById("farmerQuantity").value);
+    const price = Number(document.getElementById("farmerPrice").value);
+    const need = document.getElementById("farmerNeed").value.trim();
 
-    farmerData = {
+    if (!name || !phone || !location || !product || quantity <= 0 || price < 0) {
+        alert("Please fill all required fields correctly.");
+        return;
+    }
 
-        name:
-            document.getElementById(
-                "farmerName"
-            ).value,
+    const user = firebase.auth().currentUser;
 
-        phone:
-            document.getElementById(
-                "farmerPhone"
-            ).value,
+    db.collection("products").add({
+        farmerName: name,
+        farmerPhone: phone,
+        farmerLocation: location,
+        farmerProduct: product,
+        farmerQuantity: quantity,
+        farmerPrice: price,
+        farmerNeed: need,
+        uid: user ? user.uid : null,
+        status: "available",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    })
+    .then(() => {
 
-        location:
-            document.getElementById(
-                "farmerLocation"
-            ).value,
+        alert("Product added successfully! 🌾");
 
-        product:
-            document.getElementById(
-                "farmerProduct"
-            ).value.toLowerCase(),
+        document.getElementById("farmerProduct").value = "";
+        document.getElementById("farmerQuantity").value = "";
+        document.getElementById("farmerPrice").value = "";
+        document.getElementById("farmerNeed").value = "";
 
-        quantity:
-            Number(
-                document.getElementById(
-                    "farmerQuantity"
-                ).value
-            ),
-
-        price:
-            Number(
-                document.getElementById(
-                    "farmerPrice"
-                ).value
-            ),
-
-        need:
-            document.getElementById(
-                "farmerNeed"
-            ).value
-
-    };
-
-
-    alert(
-        "Your produce has been added to FarmSwap! 🌱"
-    );
-
-
-    document.getElementById(
-        "farmerForm"
-    ).style.display = "none";
-
-
-    checkMatch();
-
+    })
+    .catch((error) => {
+        console.error(error);
+        alert("Could not add product.");
+    });
 }
 
 
-
-/* REQUEST SUBMISSION */
+// ===============================
+// REQUESTER SUBMIT
+// ===============================
 
 function submitRequester(event) {
 
     event.preventDefault();
 
+    const name = document.getElementById("requesterName").value.trim();
+    const phone = document.getElementById("requesterPhone").value.trim();
+    const location = document.getElementById("requesterLocation").value.trim();
+    const product = document.getElementById("neededProduct").value.trim();
+    const quantity = Number(document.getElementById("neededQuantity").value);
+    const maxPrice = Number(document.getElementById("maxPrice").value);
+    const exchangeProduct = document.getElementById("exchangeProduct").value.trim();
 
-    requesterData = {
+    if (!name || !phone || !location || !product || quantity <= 0 || maxPrice < 0) {
+        alert("Please fill all required fields correctly.");
+        return;
+    }
 
-        name:
-            document.getElementById(
-                "requesterName"
-            ).value,
+    const user = firebase.auth().currentUser;
 
-        phone:
-            document.getElementById(
-                "requesterPhone"
-            ).value,
+    db.collection("requests").add({
+        requesterName: name,
+        requesterPhone: phone,
+        requesterLocation: location,
+        neededProduct: product,
+        neededQuantity: quantity,
+        maxPrice: maxPrice,
+        exchangeProduct: exchangeProduct,
+        uid: user ? user.uid : null,
+        status: "active",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    })
+    .then(() => {
 
-        location:
-            document.getElementById(
-                "requesterLocation"
-            ).value,
+        alert("Request added successfully! 🔎");
 
-        product:
-            document.getElementById(
-                "neededProduct"
-            ).value.toLowerCase(),
+        document.getElementById("neededProduct").value = "";
+        document.getElementById("neededQuantity").value = "";
+        document.getElementById("maxPrice").value = "";
+        document.getElementById("exchangeProduct").value = "";
 
-        quantity:
-            Number(
-                document.getElementById(
-                    "neededQuantity"
-                ).value
-            ),
-
-        maxPrice:
-            Number(
-                document.getElementById(
-                    "maxPrice"
-                ).value
-            ),
-
-        exchange:
-            document.getElementById(
-                "exchangeProduct"
-            ).value
-
-    };
-
-
-    document.getElementById(
-        "requesterForm"
-    ).style.display = "none";
-
-
-    alert(
-        "Request received! 🤖 Searching for matches..."
-    );
-
-
-    checkMatch();
-
+    })
+    .catch((error) => {
+        console.error(error);
+        alert("Could not add request.");
+    });
 }
 
 
+// ===============================
+// LOAD PRODUCTS
+// ===============================
 
-/* SMART MATCHING */
+function loadProducts() {
 
-function checkMatch() {
+    db.collection("products")
+        .where("status", "==", "available")
+        .onSnapshot((snapshot) => {
 
-    if (
-        farmerData === null ||
-        requesterData === null
-    ) {
+            const container = document.getElementById("farmerListings");
 
-        return;
+            if (!container) return;
+
+            container.innerHTML = "";
+
+            snapshot.forEach((doc) => {
+
+                const data = doc.data();
+
+                container.innerHTML += `
+                    <div class="listing-card">
+                        <h3>🌾 ${escapeHTML(data.farmerProduct)}</h3>
+                        <p><strong>Farmer:</strong> ${escapeHTML(data.farmerName)}</p>
+                        <p><strong>Location:</strong> ${escapeHTML(data.farmerLocation)}</p>
+                        <p><strong>Available:</strong> ${data.farmerQuantity}</p>
+                        <p><strong>Price:</strong> ₹${data.farmerPrice}</p>
+                    </div>
+                `;
+            });
+
+            checkAllMatches();
+        });
+}
+
+
+// ===============================
+// LOAD REQUESTS
+// ===============================
+
+function loadRequests() {
+
+    db.collection("requests")
+        .where("status", "==", "active")
+        .onSnapshot((snapshot) => {
+
+            const container = document.getElementById("requesterListings");
+
+            if (!container) return;
+
+            container.innerHTML = "";
+
+            snapshot.forEach((doc) => {
+
+                const data = doc.data();
+
+                container.innerHTML += `
+                    <div class="listing-card">
+                        <h3>🔎 ${escapeHTML(data.neededProduct)}</h3>
+                        <p><strong>Requester:</strong> ${escapeHTML(data.requesterName)}</p>
+                        <p><strong>Location:</strong> ${escapeHTML(data.requesterLocation)}</p>
+                        <p><strong>Required:</strong> ${data.neededQuantity}</p>
+                        <p><strong>Maximum Price:</strong> ₹${data.maxPrice}</p>
+                    </div>
+                `;
+            });
+
+            checkAllMatches();
+        });
+}
+
+
+// ===============================
+// CHECK ALL MATCHES
+// ===============================
+
+async function checkAllMatches() {
+
+    try {
+
+        const productsSnapshot = await db.collection("products")
+            .where("status", "==", "available")
+            .get();
+
+        const requestsSnapshot = await db.collection("requests")
+            .where("status", "==", "active")
+            .get();
+
+        let bestMatch = null;
+        let bestScore = 0;
+
+        productsSnapshot.forEach((productDoc) => {
+
+            const product = productDoc.data();
+
+            requestsSnapshot.forEach((requestDoc) => {
+
+                const request = requestDoc.data();
+
+                // Don't match the same user with themselves
+                if (product.uid && request.uid && product.uid === request.uid) {
+                    return;
+                }
+
+                const score = calculateMatchScore(product, request);
+
+                if (score > bestScore) {
+
+                    bestScore = score;
+
+                    bestMatch = {
+                        productId: productDoc.id,
+                        requestId: requestDoc.id,
+                        product: product,
+                        request: request,
+                        score: score
+                    };
+                }
+            });
+        });
+
+        if (bestMatch && bestScore >= 60) {
+
+            currentMatch = bestMatch;
+
+            showMatch(bestMatch);
+
+        }
+
+    } catch (error) {
+
+        console.error("Matching error:", error);
 
     }
+}
 
+
+// ===============================
+// MATCH SCORE
+// ===============================
+
+function calculateMatchScore(product, request) {
 
     let score = 0;
 
+    const farmerProduct = product.farmerProduct.toLowerCase();
+    const neededProduct = request.neededProduct.toLowerCase();
 
+    const farmerLocation = product.farmerLocation.toLowerCase();
+    const requesterLocation = request.requesterLocation.toLowerCase();
 
-    /* PRODUCT MATCH */
-
+    // Product match
     if (
-        farmerData.product
-        .includes(
-            requesterData.product
-        )
-        ||
-        requesterData.product
-        .includes(
-            farmerData.product
-        )
+        farmerProduct.includes(neededProduct) ||
+        neededProduct.includes(farmerProduct)
     ) {
-
         score += 40;
-
     }
 
-
-
-    /* QUANTITY MATCH */
-
-    if (
-        farmerData.quantity
-        >=
-        requesterData.quantity
-    ) {
-
+    // Quantity match
+    if (product.farmerQuantity >= request.neededQuantity) {
         score += 20;
-
     }
 
-
-
-    /* PRICE MATCH */
-
-    if (
-        farmerData.price
-        <=
-        requesterData.maxPrice
-    ) {
-
+    // Price match
+    if (product.farmerPrice <= request.maxPrice) {
         score += 20;
-
     }
 
-
-
-    /* LOCATION MATCH */
-
+    // Location match
     if (
-        farmerData.location
-        .toLowerCase()
-        ===
-        requesterData.location
-        .toLowerCase()
+        farmerLocation === requesterLocation ||
+        farmerLocation.includes(requesterLocation) ||
+        requesterLocation.includes(farmerLocation)
     ) {
-
         score += 20;
-
     }
 
-
-
-    showMatch(score);
-
+    return score;
 }
 
 
+// ===============================
+// SHOW MATCH
+// ===============================
 
-/* DISPLAY MATCH */
+function showMatch(match) {
 
-function showMatch(score) {
+    const matchSection = document.getElementById("match");
+    const matchResult = document.getElementById("matchResult");
 
-    document.getElementById(
-        "match"
-    ).style.display = "block";
+    if (!matchSection || !matchResult) return;
 
+    matchSection.style.display = "block";
 
-    let result =
-        document.getElementById(
-            "matchResult"
-        );
+    matchResult.innerHTML = `
+        <div class="match-card">
 
+            <h2>🎉 Match Found!</h2>
 
-    if (score >= 60) {
+            <p><strong>Product:</strong>
+                ${escapeHTML(match.product.farmerProduct)}
+            </p>
 
-        result.innerHTML = `
+            <p><strong>Farmer:</strong>
+                ${escapeHTML(match.product.farmerName)}
+            </p>
 
-            <div class="score">
+            <p><strong>Requester:</strong>
+                ${escapeHTML(match.request.requesterName)}
+            </p>
 
-                ${score}% MATCH
+            <p><strong>Quantity:</strong>
+                ${match.request.neededQuantity}
+            </p>
 
-            </div>
+            <p><strong>Price:</strong>
+                ₹${match.product.farmerPrice}
+            </p>
 
+            <p><strong>Match Score:</strong>
+                ${match.score}%
+            </p>
 
-            <div class="match-card">
+            <button onclick="connectUsers()">
+                🤝 Connect
+            </button>
 
-                <h3>
-                    🌱 ${farmerData.product}
-                </h3>
+        </div>
+    `;
 
-                <p>
-
-                    <b>Available:</b>
-                    ${farmerData.quantity} kg
-
-                </p>
-
-                <p>
-
-                    <b>Price:</b>
-                    ₹${farmerData.price}/kg
-
-                </p>
-
-                <p>
-
-                    📍 ${farmerData.location}
-
-                </p>
-
-                <hr><br>
-
-                <h3>
-                    🛒 Request
-                </h3>
-
-                <p>
-
-                    <b>Requester:</b>
-                    ${requesterData.name}
-
-                </p>
-
-                <p>
-
-                    <b>Needs:</b>
-                    ${requesterData.quantity} kg
-
-                </p>
-
-                <p>
-
-                    <b>Maximum price:</b>
-                    ₹${requesterData.maxPrice}/kg
-
-                </p>
-
-            </div>
-
-        `;
-
-    }
-
-    else {
-
-        result.innerHTML = `
-
-            <div class="score">
-
-                ${score}% MATCH
-
-            </div>
-
-            <div class="match-card">
-
-                <h3>
-                    No strong match yet.
-                </h3>
-
-                <p>
-
-                    FarmSwap will keep looking
-                    for a better combination.
-
-                </p>
-
-            </div>
-
-        `;
-
-    }
-
-
-    document.getElementById(
-        "match"
-    ).scrollIntoView({
+    matchSection.scrollIntoView({
         behavior: "smooth"
     });
-
 }
 
 
+// ===============================
+// CONNECT USERS
+// ===============================
 
-/* CONNECT */
+async function connectUsers() {
 
-function connectUsers() {
+    if (!currentMatch) {
+        alert("No match available.");
+        return;
+    }
 
-    alert(
+    const productRef = db.collection("products")
+        .doc(currentMatch.productId);
 
-        "🎉 Match confirmed!\n\n" +
+    const requestRef = db.collection("requests")
+        .doc(currentMatch.requestId);
 
-        "FarmSwap has connected the " +
+    try {
 
-        "supplier and requester."
+        await db.runTransaction(async (transaction) => {
 
-    );
+            const productDoc = await transaction.get(productRef);
+            const requestDoc = await transaction.get(requestRef);
 
+            if (!productDoc.exists || !requestDoc.exists) {
+                throw new Error("Product or request no longer exists.");
+            }
+
+            const product = productDoc.data();
+            const request = requestDoc.data();
+
+            if (product.status !== "available") {
+                throw new Error("This product is no longer available.");
+            }
+
+            if (request.status !== "active") {
+                throw new Error("This request has already been completed.");
+            }
+
+            if (product.farmerQuantity < request.neededQuantity) {
+                throw new Error("Not enough quantity available.");
+            }
+
+            const remainingQuantity =
+                product.farmerQuantity - request.neededQuantity;
+
+            transaction.update(requestRef, {
+                status: "completed",
+                completedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            transaction.update(productRef, {
+                farmerQuantity: remainingQuantity,
+                status: remainingQuantity > 0 ? "available" : "sold"
+            });
+        });
+
+        alert(
+            "Connected successfully! 🤝\n\n" +
+            "The request is completed and the farmer's remaining quantity has been updated."
+        );
+
+        currentMatch = null;
+
+        document.getElementById("matchResult").innerHTML = "";
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(error.message);
+    }
+}
+
+
+// ===============================
+// SECURITY HELPER
+// ===============================
+
+function escapeHTML(value) {
+
+    if (value === undefined || value === null) {
+        return "";
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
