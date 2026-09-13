@@ -44,18 +44,19 @@ firebase.auth().signInAnonymously()
 // ===============================
 
 function showFarmer() {
-    document.getElementById("farmerSection").scrollIntoView({
+    document.getElementById("farmerForm").style.display = "block";
+    document.getElementById("requesterForm").style.display = "none";
+
+    document.getElementById("farmerForm").scrollIntoView({
         behavior: "smooth"
     });
 }
 
-
-// ===============================
-// SHOW REQUESTER FORM
-// ===============================
-
 function showRequester() {
-    document.getElementById("requesterSection").scrollIntoView({
+    document.getElementById("requesterForm").style.display = "block";
+    document.getElementById("farmerForm").style.display = "none";
+
+    document.getElementById("requesterForm").scrollIntoView({
         behavior: "smooth"
     });
 }
