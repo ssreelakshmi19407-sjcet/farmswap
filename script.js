@@ -414,11 +414,18 @@ async function connectUsers() {
         return;
     }
 
+    // Save the match locally
+    const match = currentMatch;
+
     const productRef = db.collection("products")
-        .doc(currentMatch.productId);
+        .doc(match.productId);
 
     const requestRef = db.collection("requests")
-        .doc(currentMatch.requestId);
+        .doc(match.requestId);
+
+    // Clear the current match immediately
+    // so the same match cannot be connected twice
+    currentMatch = null;
 
     try {
 
@@ -449,29 +456,45 @@ async function connectUsers() {
             const remainingQuantity =
                 product.farmerQuantity - request.neededQuantity;
 
+            // Complete the request
             transaction.update(requestRef, {
                 status: "completed",
                 completedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
+            // Reduce farmer's quantity
             transaction.update(productRef, {
                 farmerQuantity: remainingQuantity,
-                status: remainingQuantity > 0 ? "available" : "sold"
+                status: remainingQuantity > 0
+                    ? "available"
+                    : "sold"
             });
         });
+
+        // Remove the old match window
+        const matchResult = document.getElementById("matchResult");
+
+        if (matchResult) {
+            matchResult.innerHTML = `
+                <div class="match-card">
+                    <h2>🤝 Connected Successfully!</h2>
+                    <p>The farmer and requester have been connected.</p>
+                    <p>The request has been completed and the available quantity has been updated.</p>
+                </div>
+            `;
+        }
 
         alert(
             "Connected successfully! 🤝\n\n" +
             "The request is completed and the farmer's remaining quantity has been updated."
         );
 
-        currentMatch = null;
-
-        document.getElementById("matchResult").innerHTML = "";
-
     } catch (error) {
 
-        console.error(error);
+        console.error("Connection error:", error);
+
+        // Allow another match attempt if the transaction failed
+        currentMatch = match;
 
         alert(error.message);
     }
