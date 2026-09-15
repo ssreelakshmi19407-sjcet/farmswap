@@ -382,3 +382,100 @@ footer p {
     }
 
 }
+/* ===============================
+   INTERACTIVE FARM MARKET
+================================ */
+
+.farm-market {
+    padding: 60px 20px;
+    text-align: center;
+    background: #f7fff7;
+}
+
+.market-heading h2 {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.market-heading p {
+    font-size: 17px;
+    margin-bottom: 35px;
+}
+
+/* Main action cards */
+
+.quick-actions {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    flex-wrap: wrap;
+    margin-bottom: 50px;
+}
+
+.action-card {
+    width: 280px;
+    padding: 30px 20px;
+    border: none;
+    border-radius: 20px;
+    background: white;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.action-card:hover {
+    transform: translateY(-7px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.action-icon {
+    font-size: 45px;
+    display: block;
+    margin-bottom: 12px;
+}
+
+.action-card h3 {
+    margin: 10px 0;
+}
+
+.action-card p {
+    margin: 0;
+}
+
+/* Quick products */
+
+.quick-products {
+    max-width: 900px;
+    margin: auto;
+}
+
+.quick-products h3 {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+.quick-products p {
+    margin-bottom: 20px;
+}
+
+.product-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.product-buttons button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 25px;
+    background: white;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+    cursor: pointer;
+    font-size: 15px;
+    transition: 0.25s;
+}
+
+.product-buttons button:hover {
+    transform: scale(1.06);
+}
