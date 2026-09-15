@@ -518,3 +518,20 @@ function escapeHTML(value) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }
+// ===============================
+// QUICK PRODUCT SELECTION
+// ===============================
+
+function selectProduct(productName) {
+
+    // Open requester form
+    showRequester();
+
+    // Automatically fill the product
+    const productInput = document.getElementById("neededProduct");
+
+    if (productInput) {
+        productInput.value = productName;
+        productInput.focus();
+    }
+}
