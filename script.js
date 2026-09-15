@@ -729,7 +729,6 @@ async function connectUsers() {
         return;
     }
 
-    // Save the match locally
     const match = currentMatch;
 
     const productRef = db.collection("products")
@@ -737,10 +736,6 @@ async function connectUsers() {
 
     const requestRef = db.collection("requests")
         .doc(match.requestId);
-
-    // Clear the current match immediately
-    // so the same match cannot be connected twice
-    currentMatch = null;
 
     try {
 
@@ -771,50 +766,74 @@ async function connectUsers() {
             const remainingQuantity =
                 product.farmerQuantity - request.neededQuantity;
 
-            // Complete the request
+            // Mark request as completed
             transaction.update(requestRef, {
                 status: "completed",
                 completedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            // Reduce farmer's quantity
+            // Update farmer's product
             transaction.update(productRef, {
+
                 farmerQuantity: remainingQuantity,
+
                 status: remainingQuantity > 0
                     ? "available"
                     : "sold"
             });
+
         });
 
-        // Remove the old match window
-        const matchResult = document.getElementById("matchResult");
+        // Clear current match
+        currentMatch = null;
 
-        if (matchResult) {
-            matchResult.innerHTML = `
-                <div class="match-card">
-                    <h2>🤝 Connected Successfully!</h2>
-                    <p>The farmer and requester have been connected.</p>
-                    <p>The request has been completed and the available quantity has been updated.</p>
-                </div>
-            `;
+        // Hide match section
+        const matchSection = document.getElementById("match");
+
+        if (matchSection) {
+            matchSection.style.display = "none";
+        }
+
+        // Hide forms
+        const farmerForm = document.getElementById("farmerForm");
+        const requesterForm = document.getElementById("requesterForm");
+
+        if (farmerForm) {
+            farmerForm.style.display = "none";
+        }
+
+        if (requesterForm) {
+            requesterForm.style.display = "none";
+        }
+
+        // Go back to Home
+        const homeSection = document.getElementById("home");
+
+        if (homeSection) {
+            homeSection.scrollIntoView({
+                behavior: "smooth"
+            });
+        } else {
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
         }
 
         alert(
             "Connected successfully! 🤝\n\n" +
-            "The request is completed and the farmer's remaining quantity has been updated."
+            "The request is completed and the product has been updated."
         );
 
     } catch (error) {
 
         console.error("Connection error:", error);
 
-        // Allow another match attempt if the transaction failed
         currentMatch = match;
 
         alert(error.message);
     }
 }
-
 
 // ===============================
 // SECURITY HELPER
