@@ -74,11 +74,12 @@ function submitFarmer(event) {
     const phone = document.getElementById("farmerPhone").value.trim();
     const location = document.getElementById("farmerLocation").value.trim();
     const product = document.getElementById("farmerProduct").value.trim();
+    const category = document.getElementById("farmerCategory").value;
     const quantity = Number(document.getElementById("farmerQuantity").value);
     const price = Number(document.getElementById("farmerPrice").value);
     const need = document.getElementById("farmerNeed").value.trim();
 
-    if (!name || !phone || !location || !product || quantity <= 0 || price < 0) {
+    if (!name || !phone || !location || !product || !category || quantity <= 0 || price < 0) {
         alert("Please fill all required fields correctly.");
         return;
     }
@@ -89,8 +90,9 @@ function submitFarmer(event) {
         farmerName: name,
         farmerPhone: phone,
         farmerLocation: location,
-        farmerProduct: product,
-        farmerQuantity: quantity,
+       farmerProduct: product,
+category: category,
+farmerQuantity: quantity,
         farmerPrice: price,
         farmerNeed: need,
         uid: user ? user.uid : null,
@@ -100,8 +102,10 @@ function submitFarmer(event) {
     .then(() => {
 
         alert("Product added successfully! 🌾");
+        goHome();
 
         document.getElementById("farmerProduct").value = "";
+        document.getElementById("farmerCategory").value = "";
         document.getElementById("farmerQuantity").value = "";
         document.getElementById("farmerPrice").value = "";
         document.getElementById("farmerNeed").value = "";
@@ -126,11 +130,12 @@ function submitRequester(event) {
     const phone = document.getElementById("requesterPhone").value.trim();
     const location = document.getElementById("requesterLocation").value.trim();
     const product = document.getElementById("neededProduct").value.trim();
+    const category = document.getElementById("requestCategory").value;
     const quantity = Number(document.getElementById("neededQuantity").value);
     const maxPrice = Number(document.getElementById("maxPrice").value);
     const exchangeProduct = document.getElementById("exchangeProduct").value.trim();
 
-    if (!name || !phone || !location || !product || quantity <= 0 || maxPrice < 0) {
+   if (!name || !phone || !location || !product || !category || quantity <= 0 || maxPrice < 0) {
         alert("Please fill all required fields correctly.");
         return;
     }
@@ -142,7 +147,8 @@ function submitRequester(event) {
         requesterPhone: phone,
         requesterLocation: location,
         neededProduct: product,
-        neededQuantity: quantity,
+category: category,
+neededQuantity: quantity,
         maxPrice: maxPrice,
         exchangeProduct: exchangeProduct,
         uid: user ? user.uid : null,
@@ -152,9 +158,11 @@ function submitRequester(event) {
     .then(() => {
 
         alert("Request added successfully! 🔎");
+        goHome();
 
         document.getElementById("neededProduct").value = "";
         document.getElementById("neededQuantity").value = "";
+        document.getElementById("requestCategory").value = "";
         document.getElementById("maxPrice").value = "";
         document.getElementById("exchangeProduct").value = "";
 
@@ -177,85 +185,184 @@ function loadProducts() {
         .onSnapshot((snapshot) => {
 
             const container = document.getElementById("farmerListings");
+            const quickContainer =
+                document.getElementById("quickProductButtons");
 
-            if (!container) return;
+            // -------------------------------
+            // FARMER LISTINGS
+            // -------------------------------
 
-            container.innerHTML = "";
+            if (container) {
 
-           snapshot.forEach((doc) => {
+                container.innerHTML = "";
 
-    const data = doc.data();
+                snapshot.forEach((doc) => {
 
-    // Show product in farmer listings
-    container.innerHTML += `
-        <div class="listing-card">
-            <h3>🌾 ${escapeHTML(data.farmerProduct)}</h3>
-            <p><strong>Farmer:</strong> ${escapeHTML(data.farmerName)}</p>
-            <p><strong>Location:</strong> ${escapeHTML(data.farmerLocation)}</p>
-            <p><strong>Available:</strong> ${data.farmerQuantity}</p>
-            <p><strong>Price:</strong> ₹${data.farmerPrice}</p>
-        </div>
-    `;
-});
+                    const data = doc.data();
 
+                    container.innerHTML += `
+                        <div class="listing-card">
 
-// ===============================
-// SHOW PRODUCTS IN QUICK MARKET
-// ===============================
+                            <h3>🌾 ${escapeHTML(data.farmerProduct)}</h3>
 
-const quickContainer = document.getElementById("quickProductButtons");
+                            <p>
+                                <strong>Category:</strong>
+                                ${escapeHTML(data.category || "Others")}
+                            </p>
 
-if (quickContainer) {
+                            <p>
+                                <strong>Farmer:</strong>
+                                ${escapeHTML(data.farmerName)}
+                            </p>
 
-    quickContainer.innerHTML = "";
+                            <p>
+                                <strong>Location:</strong>
+                                ${escapeHTML(data.farmerLocation)}
+                            </p>
 
-    const products = new Map();
+                            <p>
+                                <strong>Available:</strong>
+                                ${data.farmerQuantity}
+                            </p>
 
-    snapshot.forEach((doc) => {
+                            <p>
+                                <strong>Price:</strong>
+                                ₹${data.farmerPrice}
+                            </p>
 
-        const data = doc.data();
-        const productName = (data.farmerProduct || "").trim();
-
-        if (productName) {
-            const key = productName.toLowerCase();
-
-            if (!products.has(key)) {
-                products.set(key, productName);
+                        </div>
+                    `;
+                });
             }
-        }
 
-    });
 
-    if (products.size === 0) {
+            // -------------------------------
+            // QUICK PRODUCTS ON HOME
+            // -------------------------------
 
-        quickContainer.innerHTML =
-            "<p>No products available yet. Be the first farmer to add one! 🌱</p>";
+            if (quickContainer) {
 
-    } else {
+                quickContainer.innerHTML = "";
 
-        products.forEach((productName) => {
+                const categories = {};
 
-            const button = document.createElement("button");
+                snapshot.forEach((doc) => {
 
-            button.type = "button";
-            button.textContent = "🌾 " + productName;
+                    const data = doc.data();
 
-            button.onclick = function () {
-                selectProduct(productName);
-            };
+                    const productName =
+                        (data.farmerProduct || "").trim();
 
-            quickContainer.appendChild(button);
+                    const category =
+                        data.category || "Others";
 
-        });
+                    if (!productName) return;
 
-    }
-}
+                    if (!categories[category]) {
+                        categories[category] = [];
+                    }
+
+                    // Avoid duplicate product names
+                    const exists = categories[category].some(
+                        product =>
+                            product.toLowerCase() ===
+                            productName.toLowerCase()
+                    );
+
+                    if (!exists) {
+                        categories[category].push(productName);
+                    }
+
+                });
+
+
+                const categoryNames =
+                    Object.keys(categories);
+
+
+                if (categoryNames.length === 0) {
+
+                    quickContainer.innerHTML = `
+                        <p>
+                            No products available yet.
+                            Be the first farmer to add one! 🌱
+                        </p>
+                    `;
+
+                } else {
+
+                    categoryNames.forEach((category) => {
+
+                        const categoryBox =
+                            document.createElement("div");
+
+                        categoryBox.className =
+                            "category-box";
+
+                        categoryBox.innerHTML = `
+                            <h4>${escapeHTML(category)}</h4>
+                        `;
+
+                        const buttonContainer =
+                            document.createElement("div");
+
+                        buttonContainer.className =
+                            "product-buttons";
+
+
+                        categories[category].forEach(
+                            (productName) => {
+
+                                const button =
+                                    document.createElement("button");
+
+                                button.type = "button";
+
+                                button.textContent =
+                                    "🌾 " + productName;
+
+                                button.onclick = function () {
+
+                                    selectProduct(productName);
+
+                                    // Automatically select category
+                                    const categoryInput =
+                                        document.getElementById(
+                                            "requestCategory"
+                                        );
+
+                                    if (categoryInput) {
+                                        categoryInput.value =
+                                            category;
+                                    }
+
+                                };
+
+                                buttonContainer.appendChild(button);
+
+                            }
+                        );
+
+
+                        categoryBox.appendChild(
+                            buttonContainer
+                        );
+
+                        quickContainer.appendChild(
+                            categoryBox
+                        );
+
+                    });
+
+                }
+
+            }
+
 
             checkAllMatches();
+
         });
 }
-
-
 // ===============================
 // LOAD REQUESTS
 // ===============================
@@ -266,31 +373,170 @@ function loadRequests() {
         .where("status", "==", "active")
         .onSnapshot((snapshot) => {
 
-            const container = document.getElementById("requesterListings");
+            const container =
+                document.getElementById("requesterListings");
 
-            if (!container) return;
+            const quickContainer =
+                document.getElementById("quickRequestButtons");
 
-            container.innerHTML = "";
 
-            snapshot.forEach((doc) => {
+            // -------------------------------
+            // REQUEST LISTINGS
+            // -------------------------------
 
-                const data = doc.data();
+            if (container) {
 
-                container.innerHTML += `
-                    <div class="listing-card">
-                        <h3>🔎 ${escapeHTML(data.neededProduct)}</h3>
-                        <p><strong>Requester:</strong> ${escapeHTML(data.requesterName)}</p>
-                        <p><strong>Location:</strong> ${escapeHTML(data.requesterLocation)}</p>
-                        <p><strong>Required:</strong> ${data.neededQuantity}</p>
-                        <p><strong>Maximum Price:</strong> ₹${data.maxPrice}</p>
-                    </div>
-                `;
-            });
+                container.innerHTML = "";
+
+                snapshot.forEach((doc) => {
+
+                    const data = doc.data();
+
+                    container.innerHTML += `
+                        <div class="listing-card">
+
+                            <h3>
+                                🔎 ${escapeHTML(data.neededProduct)}
+                            </h3>
+
+                            <p>
+                                <strong>Category:</strong>
+                                ${escapeHTML(data.category || "Others")}
+                            </p>
+
+                            <p>
+                                <strong>Requester:</strong>
+                                ${escapeHTML(data.requesterName)}
+                            </p>
+
+                            <p>
+                                <strong>Location:</strong>
+                                ${escapeHTML(data.requesterLocation)}
+                            </p>
+
+                            <p>
+                                <strong>Required:</strong>
+                                ${data.neededQuantity}
+                            </p>
+
+                            <p>
+                                <strong>Maximum Price:</strong>
+                                ₹${data.maxPrice}
+                            </p>
+
+                        </div>
+                    `;
+                });
+            }
+
+
+            // -------------------------------
+            // REQUESTS ON HOME
+            // -------------------------------
+
+            if (quickContainer) {
+
+                quickContainer.innerHTML = "";
+
+                const categories = {};
+
+
+                snapshot.forEach((doc) => {
+
+                    const data = doc.data();
+
+                    const productName =
+                        (data.neededProduct || "").trim();
+
+                    const category =
+                        data.category || "Others";
+
+                    if (!productName) return;
+
+                    if (!categories[category]) {
+                        categories[category] = [];
+                    }
+
+                    categories[category].push({
+                        product: productName,
+                        quantity: data.neededQuantity
+                    });
+
+                });
+
+
+                const categoryNames =
+                    Object.keys(categories);
+
+
+                if (categoryNames.length === 0) {
+
+                    quickContainer.innerHTML = `
+                        <p>
+                            No active requests yet. 🔎
+                        </p>
+                    `;
+
+                } else {
+
+                    categoryNames.forEach((category) => {
+
+                        const categoryBox =
+                            document.createElement("div");
+
+                        categoryBox.className =
+                            "category-box";
+
+                        categoryBox.innerHTML = `
+                            <h4>${escapeHTML(category)}</h4>
+                        `;
+
+
+                        categories[category].forEach(
+                            (request) => {
+
+                                const requestCard =
+                                    document.createElement("div");
+
+                                requestCard.className =
+                                    "request-card";
+
+                                requestCard.innerHTML = `
+                                    <p>
+                                        🔎 <strong>
+                                        Need ${escapeHTML(request.product)}
+                                        </strong>
+                                    </p>
+
+                                    <p>
+                                        Quantity:
+                                        ${request.quantity}
+                                    </p>
+                                `;
+
+                                categoryBox.appendChild(
+                                    requestCard
+                                );
+
+                            }
+                        );
+
+
+                        quickContainer.appendChild(
+                            categoryBox
+                        );
+
+                    });
+
+                }
+
+            }
+
 
             checkAllMatches();
+
         });
 }
-
 
 // ===============================
 // CHECK ALL MATCHES
@@ -362,6 +608,11 @@ async function checkAllMatches() {
 // ===============================
 
 function calculateMatchScore(product, request) {
+    const farmerCategory =
+    (product.category || "").toLowerCase();
+
+const requesterCategory =
+    (request.category || "").toLowerCase();
 
     let score = 0;
 
@@ -370,7 +621,17 @@ function calculateMatchScore(product, request) {
 
     const farmerLocation = product.farmerLocation.toLowerCase();
     const requesterLocation = request.requesterLocation.toLowerCase();
+    
+    // Category match
+if (
+    farmerCategory &&
+    requesterCategory &&
+    farmerCategory === requesterCategory
+) {
+    score += 20;
+}
 
+    
     // Product match
     if (
         farmerProduct.includes(neededProduct) ||
@@ -398,7 +659,7 @@ function calculateMatchScore(product, request) {
         score += 20;
     }
 
-    return score;
+  return Math.min(score, 100);
 }
 
 
@@ -588,4 +849,26 @@ function selectProduct(productName) {
         productInput.value = productName;
         productInput.focus();
     }
+}
+// ===============================
+// RETURN TO HOME
+// ===============================
+
+function goHome() {
+
+    const farmerForm = document.getElementById("farmerForm");
+    const requesterForm = document.getElementById("requesterForm");
+
+    if (farmerForm) {
+        farmerForm.style.display = "none";
+    }
+
+    if (requesterForm) {
+        requesterForm.style.display = "none";
+    }
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
 }
