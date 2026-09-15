@@ -182,20 +182,74 @@ function loadProducts() {
 
             container.innerHTML = "";
 
-            snapshot.forEach((doc) => {
+           snapshot.forEach((doc) => {
 
-                const data = doc.data();
+    const data = doc.data();
 
-                container.innerHTML += `
-                    <div class="listing-card">
-                        <h3>🌾 ${escapeHTML(data.farmerProduct)}</h3>
-                        <p><strong>Farmer:</strong> ${escapeHTML(data.farmerName)}</p>
-                        <p><strong>Location:</strong> ${escapeHTML(data.farmerLocation)}</p>
-                        <p><strong>Available:</strong> ${data.farmerQuantity}</p>
-                        <p><strong>Price:</strong> ₹${data.farmerPrice}</p>
-                    </div>
-                `;
-            });
+    // Show product in farmer listings
+    container.innerHTML += `
+        <div class="listing-card">
+            <h3>🌾 ${escapeHTML(data.farmerProduct)}</h3>
+            <p><strong>Farmer:</strong> ${escapeHTML(data.farmerName)}</p>
+            <p><strong>Location:</strong> ${escapeHTML(data.farmerLocation)}</p>
+            <p><strong>Available:</strong> ${data.farmerQuantity}</p>
+            <p><strong>Price:</strong> ₹${data.farmerPrice}</p>
+        </div>
+    `;
+});
+
+
+// ===============================
+// SHOW PRODUCTS IN QUICK MARKET
+// ===============================
+
+const quickContainer = document.getElementById("quickProductButtons");
+
+if (quickContainer) {
+
+    quickContainer.innerHTML = "";
+
+    const products = new Map();
+
+    snapshot.forEach((doc) => {
+
+        const data = doc.data();
+        const productName = (data.farmerProduct || "").trim();
+
+        if (productName) {
+            const key = productName.toLowerCase();
+
+            if (!products.has(key)) {
+                products.set(key, productName);
+            }
+        }
+
+    });
+
+    if (products.size === 0) {
+
+        quickContainer.innerHTML =
+            "<p>No products available yet. Be the first farmer to add one! 🌱</p>";
+
+    } else {
+
+        products.forEach((productName) => {
+
+            const button = document.createElement("button");
+
+            button.type = "button";
+            button.textContent = "🌾 " + productName;
+
+            button.onclick = function () {
+                selectProduct(productName);
+            };
+
+            quickContainer.appendChild(button);
+
+        });
+
+    }
+}
 
             checkAllMatches();
         });
