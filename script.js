@@ -544,6 +544,11 @@ function loadRequests() {
 
 async function checkAllMatches() {
 
+    // Don't keep showing the same match
+    if (currentMatch) {
+        return;
+    }
+
     try {
 
         const productsSnapshot = await db.collection("products")
@@ -554,11 +559,7 @@ async function checkAllMatches() {
             .where("status", "==", "active")
             .get();
 
-        console.log("Available products:", productsSnapshot.size);
-        console.log("Active requests:", requestsSnapshot.size);
-
         if (productsSnapshot.empty || requestsSnapshot.empty) {
-            console.log("Waiting for both product and request...");
             return;
         }
 
@@ -573,12 +574,7 @@ async function checkAllMatches() {
 
                 const request = requestDoc.data();
 
-                console.log("Checking:", product.farmerProduct,
-                    "against", request.neededProduct);
-
                 const score = calculateMatchScore(product, request);
-
-                console.log("Match score:", score);
 
                 if (score >= 60 && score > bestScore) {
 
@@ -599,16 +595,10 @@ async function checkAllMatches() {
 
         if (bestMatch) {
 
-            console.log("🎯 MATCH FOUND:", bestMatch);
-
+            // Store it so it isn't repeatedly shown
             currentMatch = bestMatch;
 
             showMatch(bestMatch);
-
-        } else {
-
-            console.log("❌ No suitable match found.");
-
         }
 
     } catch (error) {
