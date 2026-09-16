@@ -751,12 +751,13 @@ async function connectUsers() {
             const product = productDoc.data();
             const request = requestDoc.data();
 
+            // Make sure nobody already connected them
             if (product.status !== "available") {
-                throw new Error("This product is no longer available.");
+                throw new Error("This product is already sold.");
             }
 
             if (request.status !== "active") {
-                throw new Error("This request has already been completed.");
+                throw new Error("This request is already completed.");
             }
 
             if (product.farmerQuantity < request.neededQuantity) {
@@ -766,17 +767,18 @@ async function connectUsers() {
             const remainingQuantity =
                 product.farmerQuantity - request.neededQuantity;
 
-            // Mark request as completed
+            // Complete the request
             transaction.update(requestRef, {
                 status: "completed",
                 completedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            // Update farmer's product
+            // Update product
             transaction.update(productRef, {
 
                 farmerQuantity: remainingQuantity,
 
+                // If nothing remains → remove from available list
                 status: remainingQuantity > 0
                     ? "available"
                     : "sold"
@@ -794,47 +796,21 @@ async function connectUsers() {
             matchSection.style.display = "none";
         }
 
-        // Hide forms
-        const farmerForm = document.getElementById("farmerForm");
-        const requesterForm = document.getElementById("requesterForm");
-
-        if (farmerForm) {
-            farmerForm.style.display = "none";
-        }
-
-        if (requesterForm) {
-            requesterForm.style.display = "none";
-        }
-
         // Go back to Home
-        const homeSection = document.getElementById("home");
-
-        if (homeSection) {
-            homeSection.scrollIntoView({
-                behavior: "smooth"
-            });
-        } else {
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth"
-            });
-        }
+        goHome();
 
         alert(
             "Connected successfully! 🤝\n\n" +
-            "The request is completed and the product has been updated."
+            "The matched request is completed."
         );
 
     } catch (error) {
 
         console.error("Connection error:", error);
 
-        currentMatch = match;
-
         alert(error.message);
     }
 }
-
 // ===============================
 // SECURITY HELPER
 // ===============================
