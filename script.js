@@ -554,6 +554,14 @@ async function checkAllMatches() {
             .where("status", "==", "active")
             .get();
 
+        console.log("Available products:", productsSnapshot.size);
+        console.log("Active requests:", requestsSnapshot.size);
+
+        if (productsSnapshot.empty || requestsSnapshot.empty) {
+            console.log("Waiting for both product and request...");
+            return;
+        }
+
         let bestMatch = null;
         let bestScore = 0;
 
@@ -561,31 +569,45 @@ async function checkAllMatches() {
 
             const product = productDoc.data();
 
-           requestsSnapshot.forEach((requestDoc) => {
+            requestsSnapshot.forEach((requestDoc) => {
 
-    const request = requestDoc.data();
+                const request = requestDoc.data();
 
-    const score = calculateMatchScore(product, request);
+                console.log("Checking:", product.farmerProduct,
+                    "against", request.neededProduct);
 
-    if (score > bestScore) {
+                const score = calculateMatchScore(product, request);
 
-        bestScore = score;
+                console.log("Match score:", score);
 
-        bestMatch = {
-            productId: productDoc.id,
-            requestId: requestDoc.id,
-            product: product,
-            request: request,
-            score: score
-        };
-    }
-});
+                if (score >= 60 && score > bestScore) {
 
-        if (bestMatch && bestScore >= 60) {
+                    bestScore = score;
+
+                    bestMatch = {
+                        productId: productDoc.id,
+                        requestId: requestDoc.id,
+                        product: product,
+                        request: request,
+                        score: score
+                    };
+                }
+
+            });
+
+        });
+
+        if (bestMatch) {
+
+            console.log("🎯 MATCH FOUND:", bestMatch);
 
             currentMatch = bestMatch;
 
             showMatch(bestMatch);
+
+        } else {
+
+            console.log("❌ No suitable match found.");
 
         }
 
@@ -596,64 +618,67 @@ async function checkAllMatches() {
     }
 }
 
-
 // ===============================
 // MATCH SCORE
 // ===============================
 
 function calculateMatchScore(product, request) {
-    const farmerCategory =
-    (product.category || "").toLowerCase();
 
-const requesterCategory =
-    (request.category || "").toLowerCase();
+    const farmerProduct =
+        (product.farmerProduct || "").trim().toLowerCase();
+
+    const neededProduct =
+        (request.neededProduct || "").trim().toLowerCase();
+
+    const farmerCategory =
+        (product.category || "").trim().toLowerCase();
+
+    const requesterCategory =
+        (request.category || "").trim().toLowerCase();
+
+    const farmerLocation =
+        (product.farmerLocation || "").trim().toLowerCase();
+
+    const requesterLocation =
+        (request.requesterLocation || "").trim().toLowerCase();
 
     let score = 0;
 
-    const farmerProduct = product.farmerProduct.toLowerCase();
-    const neededProduct = request.neededProduct.toLowerCase();
-
-    const farmerLocation = product.farmerLocation.toLowerCase();
-    const requesterLocation = request.requesterLocation.toLowerCase();
-    
-    // Category match
-if (
-    farmerCategory &&
-    requesterCategory &&
-    farmerCategory === requesterCategory
-) {
-    score += 20;
-}
-
-    
-    // Product match
+    // PRODUCT — 40 points
     if (
+        farmerProduct === neededProduct ||
         farmerProduct.includes(neededProduct) ||
         neededProduct.includes(farmerProduct)
     ) {
         score += 40;
     }
 
-    // Quantity match
-    if (product.farmerQuantity >= request.neededQuantity) {
-        score += 20;
-    }
-
-    // Price match
-    if (product.farmerPrice <= request.maxPrice) {
-        score += 20;
-    }
-
-    // Location match
+    // CATEGORY — 20 points
     if (
-        farmerLocation === requesterLocation ||
-        farmerLocation.includes(requesterLocation) ||
-        requesterLocation.includes(farmerLocation)
+        farmerCategory &&
+        requesterCategory &&
+        farmerCategory === requesterCategory
     ) {
         score += 20;
     }
 
-  return Math.min(score, 100);
+    // QUANTITY — 20 points
+    if (
+        Number(product.farmerQuantity) >=
+        Number(request.neededQuantity)
+    ) {
+        score += 20;
+    }
+
+    // PRICE — 20 points
+    if (
+        Number(product.farmerPrice) <=
+        Number(request.maxPrice)
+    ) {
+        score += 20;
+    }
+
+    return score;
 }
 
 
