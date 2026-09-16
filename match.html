@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>FarmSwap - Match Found</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header>
+
+    <div class="logo">
+        Farm<span>Swap</span> 🌱
+    </div>
+
+    <nav>
+        <a href="index.html">Home</a>
+    </nav>
+
+</header>
+
+<section id="match" class="match-section">
+
+    <div class="match-box">
+
+        <div class="match-icon">
+            🎯
+        </div>
+
+        <h2>Match Found!</h2>
+
+        <div id="matchResult"></div>
+
+        <button
+            class="primary"
+            onclick="connectUsers()">
+
+            🤝 Connect
+
+        </button>
+
+    </div>
+
+</section>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
+<script src="script.js"></script>
+
+</body>
+</html>
