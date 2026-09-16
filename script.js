@@ -924,190 +924,97 @@ function loadMatchPage() {
 // CONNECT USERS
 // ===============================
 
+// ===============================
+// CONNECT USERS
+// ===============================
+
 async function connectUsers() {
 
     if (!currentMatch) {
-
-        alert("No match available.");
-
+        window.location.href = "index.html";
         return;
     }
 
+    const match = currentMatch;
 
-    const match =
-        currentMatch;
+    const productRef = db.collection("products")
+        .doc(match.productId);
 
-
-    const productRef =
-        db.collection("products")
-            .doc(match.productId);
-
-
-    const requestRef =
-        db.collection("requests")
-            .doc(match.requestId);
-
+    const requestRef = db.collection("requests")
+        .doc(match.requestId);
 
     try {
 
-        await db.runTransaction(
-            async (transaction) => {
+        await db.runTransaction(async (transaction) => {
 
-                const productDoc =
-                    await transaction.get(
-                        productRef
-                    );
+            const productDoc =
+                await transaction.get(productRef);
 
+            const requestDoc =
+                await transaction.get(requestRef);
 
-                const requestDoc =
-                    await transaction.get(
-                        requestRef
-                    );
-
-
-                if (
-                    !productDoc.exists ||
-                    !requestDoc.exists
-                ) {
-
-                    throw new Error(
-                        "Product or request no longer exists."
-                    );
-
-                }
-
-
-                const product =
-                    productDoc.data();
-
-
-                const request =
-                    requestDoc.data();
-
-
-                if (
-                    product.status !==
-                    "available"
-                ) {
-
-                    throw new Error(
-                        "This product is already sold."
-                    );
-
-                }
-
-
-                if (
-                    request.status !==
-                    "active"
-                ) {
-
-                    throw new Error(
-                        "This request is already completed."
-                    );
-
-                }
-
-
-                const availableQuantity =
-                    Number(
-                        product.farmerQuantity
-                    );
-
-
-                const requestedQuantity =
-                    Number(
-                        request.neededQuantity
-                    );
-
-
-                if (
-                    availableQuantity <
-                    requestedQuantity
-                ) {
-
-                    throw new Error(
-                        "Not enough quantity available.\n\n" +
-                        "Available: " +
-                        availableQuantity +
-                        "\nRequested: " +
-                        requestedQuantity
-                    );
-
-                }
-
-
-                const remainingQuantity =
-                    availableQuantity -
-                    requestedQuantity;
-
-
-                // Complete request
-
-                transaction.update(
-                    requestRef,
-                    {
-                        status: "completed",
-
-                        completedAt:
-                            firebase.firestore
-                                .FieldValue
-                                .serverTimestamp()
-                    }
-                );
-
-
-                // Update product
-
-                transaction.update(
-                    productRef,
-                    {
-
-                        farmerQuantity:
-                            remainingQuantity,
-
-                        status:
-                            remainingQuantity > 0
-                                ? "available"
-                                : "sold"
-
-                    }
-                );
-
+            if (!productDoc.exists || !requestDoc.exists) {
+                return;
             }
-        );
 
+            const product = productDoc.data();
+            const request = requestDoc.data();
 
-        // Clear saved match
+            if (
+                product.status !== "available" ||
+                request.status !== "active"
+            ) {
+                return;
+            }
 
+            const availableQuantity =
+                Number(product.farmerQuantity);
+
+            const requestedQuantity =
+                Number(request.neededQuantity);
+
+            // If quantity is not enough, just stop.
+            if (availableQuantity < requestedQuantity) {
+                return;
+            }
+
+            const remainingQuantity =
+                availableQuantity - requestedQuantity;
+
+            transaction.update(requestRef, {
+                status: "completed",
+                completedAt:
+                    firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            transaction.update(productRef, {
+                farmerQuantity: remainingQuantity,
+                status: remainingQuantity > 0
+                    ? "available"
+                    : "sold"
+            });
+
+        });
+
+        // Clear match
         currentMatch = null;
+        sessionStorage.removeItem("currentMatch");
 
-        sessionStorage.removeItem(
-            "currentMatch"
-        );
-
-
-        // Return to Home
-
-        window.location.href =
-            "index.html";
-
+        // GO HOME
+        window.location.href = "index.html";
 
     }
     catch (error) {
 
-        console.error(
-            "Connection error:",
-            error
-        );
+        console.error("Connection error:", error);
 
+        // Even if something goes wrong, go Home
+        currentMatch = null;
+        sessionStorage.removeItem("currentMatch");
 
-        alert(error.message);
-
+        window.location.href = "index.html";
     }
 }
-
-
 // ===============================
 // SECURITY HELPER
 // ===============================
