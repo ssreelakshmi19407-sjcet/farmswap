@@ -561,31 +561,25 @@ async function checkAllMatches() {
 
             const product = productDoc.data();
 
-            requestsSnapshot.forEach((requestDoc) => {
+           requestsSnapshot.forEach((requestDoc) => {
 
-                const request = requestDoc.data();
+    const request = requestDoc.data();
 
-                // Don't match the same user with themselves
-                if (product.uid && request.uid && product.uid === request.uid) {
-                    return;
-                }
+    const score = calculateMatchScore(product, request);
 
-                const score = calculateMatchScore(product, request);
+    if (score > bestScore) {
 
-                if (score > bestScore) {
+        bestScore = score;
 
-                    bestScore = score;
-
-                    bestMatch = {
-                        productId: productDoc.id,
-                        requestId: requestDoc.id,
-                        product: product,
-                        request: request,
-                        score: score
-                    };
-                }
-            });
-        });
+        bestMatch = {
+            productId: productDoc.id,
+            requestId: requestDoc.id,
+            product: product,
+            request: request,
+            score: score
+        };
+    }
+});
 
         if (bestMatch && bestScore >= 60) {
 
